@@ -1,0 +1,8 @@
+{
+  "name": "Social Media Analysis API",
+  "description": "The backend for the twitter API data analysis",
+  "repository": "https://github.com/Unnati-P/SocialMediaAnalysisAPI.git",
+  "logo": "http://node-js-sample.herokuapp.com/node.svg",
+  "keywords": ["node", "express", "static"],
+  "image": "heroku/nodejs"
+}
