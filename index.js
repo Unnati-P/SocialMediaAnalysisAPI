@@ -65,6 +65,10 @@ MongoClient.connect('mongodb://ajay:123456@ds135186.mlab.com:35186/tweets', func
       return res.send({retweeted: retweeted, not_retweeted: not_retweeted});
     })
   });
+  
+  app.get("/", function(req, res){
+    return res.send("hello world");
+  });
 
   // app.get("/makeNewOckhiCollection", function (req, res) {
   //   console.log("fetching tweets");
