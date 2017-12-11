@@ -46,6 +46,12 @@ MongoClient.connect('mongodb://ajay:123456@ds135186.mlab.com:35186/tweets', func
     })
   });
 
+  app.get("/xyz", function (req, res) {
+
+      return res.send({"Hello Baby :* ": "JAaayaaa"});
+  
+  });
+
   //This endpoint will give the number of tweets retweeted in case of ockhi cyclone
   app.get("/getockhiretweets", function (req, res) {
     var query = db.collection("ockhitweets").find({}, {retweet_count: 1});
