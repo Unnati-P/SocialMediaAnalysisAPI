@@ -4,7 +4,7 @@ const MongoClient = require('mongodb').MongoClient;
 
 var app = express();
 
-var PORT = 3045;
+var PORT = 5000;
 
 var db;
 
@@ -46,15 +46,9 @@ MongoClient.connect('mongodb://ajay:123456@ds135186.mlab.com:35186/tweets', func
     })
   });
 
-  app.get("/xyz", function (req, res) {
-
-      return res.send({"Hello Baby :* ": "JAaayaaa"});
-  
-  });
-
   //This endpoint will give the number of tweets retweeted in case of ockhi cyclone
   app.get("/getockhiretweets", function (req, res) {
-    var query = db.collection("ockhitweets").find({}, {retweet_count: 1});
+    var query = db.collection("ockhidump").find({}, {retweet_count: 1});
 
     query.toArray(function(err, docs){
       var retweeted = 0,
@@ -71,28 +65,180 @@ MongoClient.connect('mongodb://ajay:123456@ds135186.mlab.com:35186/tweets', func
       return res.send({retweeted: retweeted, not_retweeted: not_retweeted});
     })
   });
-  
+
+  //This endpoint will give the locations of users
+  app.get("/getpollutiontweetslocations", function (req, res) {
+    var query = db.collection("pollutiondump").find({}, {"user.location": 1});
+
+    query.toArray(function(err, docs){
+      const results = _.groupBy(docs, function(doc){
+        return doc.user.location;
+      });
+
+      const resu = {};
+      _.forEach(results, function(value, key){
+        if(!key){
+          key = "others";
+        }
+        if(value.length >= 80){
+          resu[key] = value.length;
+        }
+      })
+
+      return res.send({"results": resu});
+    })
+  });
+
+  //This endpoint will give the locations of users
+  app.get("/getockhitweetslocations", function (req, res) {
+    var query = db.collection("ockhidump").find({}, {"user.location": 1});
+
+    query.toArray(function(err, docs){
+      const results = _.groupBy(docs, function(doc){
+        return doc.user.location;
+      });
+
+      const resu = {};
+      _.forEach(results, function(value, key){
+        if(!key){
+          key = "others";
+        }
+        if(value.length >= 80){
+          resu[key] = value.length;
+        }
+      })
+
+      return res.send({"results": resu});
+    })
+  });
+
+  //This endpoint will give the favorites of tweets
+  app.get("/getpollutiontweetsfavorites", function (req, res) {
+    var query = db.collection("pollutiondump").find({}, {"favorite_count": 1});
+
+    query.toArray(function(err, docs){
+      const results = _.groupBy(docs, function(doc){
+        return doc.favorite_count;
+      });
+
+      const resu = {};
+      _.forEach(results, function(value, key){
+        if(key > 0){
+          resu[key] = value.length;
+        }
+      })
+      //key: 0-5, 5-10, values: numbers
+      return res.send({"results": resu});
+    })
+  });
+
+  app.get("/getockhitweetsfavorites", function (req, res) {
+    var query = db.collection("ockhidump").find({}, {"favorite_count": 1});
+
+    query.toArray(function(err, docs){
+      const results = _.groupBy(docs, function(doc){
+        return doc.favorite_count;
+      });
+
+      const resu = {};
+      _.forEach(results, function(value, key){
+        if(key > 0){
+          resu[key] = value.length;
+        }
+      })
+      //key: 0-5, 5-10, values: numbers
+      return res.send({"results": resu});
+    })
+  });
+
+  //This endpoint will give number of tweets contains media, media+text and just text
+  app.get("/getpollutiontweetsmedia", function (req, res) {
+    var query = db.collection("pollutiondump").find({}, {"entities.media": 1, "text": 1});
+
+    query.toArray(function(err, docs){
+      const resu = {
+        "Text": 0,
+        "Image And Text": 0,
+      };
+
+      _.forEach(docs, function(value, key){
+        if(_.isEmpty(value.entities)){
+          resu["Text"]++;
+        } else if(!_.isEmpty(value.text) && !_.isEmpty(value.entities.media)){
+          resu["Image And Text"]++;
+        }
+      })
+      //key: 0-5, 5-10, values: numbers
+      return res.send({"results": resu});
+    })
+  });
+
+  app.get("/getockhitweetsmedia", function (req, res) {
+    var query = db.collection("ockhidump").find({}, {"entities.media": 1, "text": 1});
+
+    query.toArray(function(err, docs){
+      const resu = {
+        "Text": 0,
+        "Image And Text": 0,
+      };
+
+      _.forEach(docs, function(value, key){
+        if(_.isEmpty(value.entities)){
+          resu["Text"]++;
+        } else if(!_.isEmpty(value.text) && !_.isEmpty(value.entities.media)){
+          resu["Image And Text"]++;
+        }
+      })
+      //key: 0-5, 5-10, values: numbers
+      return res.send({"results": resu});
+    })
+  });
+
+  app.get("/getockhiretweets", function (req, res) {
+    var query = db.collection("ockhidump").find({}, {retweet_count: 1});
+
+    query.toArray(function(err, docs){
+      var retweeted = 0,
+        not_retweeted = 0;
+
+      _.forEach(docs, function(doc){
+        if(doc.retweet_count > 0){
+          retweeted++;
+        } else {
+          not_retweeted++;
+        }
+      })
+
+      return res.send({retweeted: retweeted, not_retweeted: not_retweeted});
+    })
+  });
+
   app.get("/", function(req, res){
     return res.send("hello world");
   });
 
-  // app.get("/makeNewOckhiCollection", function (req, res) {
-  //   console.log("fetching tweets");
-  //
-  //   for(var i=0;i<20;i++){
-  //     db.collection("ockhitweets").find().skip(i > 0 ? ((i-1)*500) : 0).limit(500).toArray(function(err, docs){
-  //       const newDocs = _.map(docs, function(doc, index){
-  //         console.log(doc[_.keys(doc)[1]]);
-  //         return doc[_.keys(doc)[1]];
-  //       });
-  //       _.forEach(newDocs, function(doc){
-  //           db.collection("ockhidump").insert(doc);
-  //       })
-  //     })
-  //   }
-  // });
+  app.get("/makeNewOckhiCollection", function (req, res) {
+    console.log("fetching tweets");
+
+    var kk = 0;
+    for(var i=0;i<40;i++){
+      db.collection("ockhitweets").find().skip(i > 0 ? ((i-1)*500) : 0).limit(500).toArray(function(err, docs){
+        const newDocs = _.map(docs, function(doc, index){
+          // console.log(doc[_.keys(doc)[1]]);
+          return doc[_.keys(doc)[1]] || doc;
+        });
+
+        _.forEach(newDocs, function(doc){
+          if(!_.isEmpty(doc)) {
+            db.collection("ockhidump").insert(doc);
+            console.log(kk++);
+          }
+        })
+      })
+    }
+  });
 });
 
 app.listen(PORT, function() {
-	console.log("server is listening to port 3045");
+	console.log("server is listening to port 5000");
 });
