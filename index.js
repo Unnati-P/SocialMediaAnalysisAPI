@@ -1,10 +1,18 @@
 var express = require("express");
 var _ = require("lodash");
 const MongoClient = require('mongodb').MongoClient;
+const Twitter = require('twitter');
 
 var app = express();
 
 var PORT = 5000;
+
+const twitterClient = new Twitter({
+  consumer_key: 'bC1TasFS1FLvKMhvrDpzs0Ocb',
+  consumer_secret: 'PknWLz7MqnLmz3zBYpZ55s4N6MOWKYzlI4XtKRWyjyY5v1Dg0e',
+  access_token_key: '938804144252391424-3QNUg9rnvLS2Ku60oJNssye8bXw98iI',
+  access_token_secret: '6f1BvYdj7fwesgUqIqqvn10ag9bVD8qJXrXZh1cq0eZZh',
+});
 
 var db;
 
@@ -14,6 +22,12 @@ app.use(function (req, res, next) {
     res.setHeader("Access-Control-Allow-Methods", "GET,HEAD,OPTIONS,POST,PUT");
     res.setHeader("Access-Control-Allow-Headers", "X-ACCESS_TOKEN, Access-Control-Allow-Origin, Authorization, Origin, x-requested-with, Content-Type, Content-Range, Content-Disposition, Content-Description");
     next();
+});
+
+app.get('/hashtags', function(req, res){
+  twitterClient.get('trends/place', {id: 2295402}, function(errors, tweets, response){
+    return res.send({response: JSON.parse(response.body)});
+  });
 });
 
 MongoClient.connect('mongodb://ajay:123456@ds135186.mlab.com:35186/tweets', function(err, db) {
