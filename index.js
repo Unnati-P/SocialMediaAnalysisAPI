@@ -40,44 +40,143 @@ MongoClient.connect('mongodb://ajay:123456@ds135186.mlab.com:35186/tweets', func
     })
   });
 
-  app.get("/getmentionsnodes", function (req, res) {
-    var query = db.collection("ockhidump").find({}, {"user.screen_name": 1, "entities.user_mentions": 1});
+  app.get("/getreplyockhi", function (req, res) {
+    var query = db.collection("ockhidump").find({}, {"user.screen_name": 1, "retweeted_status":1});
 
-    query.toArray(function(err, docs){
-      var count=1;
-      const nodes = [];
+   query.toArray(function(err, docs){
+     var arr = [];
+     _.forEach(docs, function(value, key){
+
+         if(!_.isEmpty(value.retweeted_status)) {
+           arr.push(value.retweeted_status.id_str);
+            //console.log(value.retweeted_status.id_str);
+         }
+
+     })
+     _.uniq(arr);
+
+      const links = [];
      _.forEach(docs, function(value1, key1){
+       if(!_.isEmpty(value1.retweeted_status)) {
           var data = {
-            id : value1.user.screen_name,
-            group : count
-          };
-          nodes.push(data);
+            source : value1.user.screen_name,
+            target : value1.retweeted_status.user.screen_name,
+            //value : 1
+          }
+        }
+        if(!_.isEmpty(data)) {
+            links.push(data);
+        }
+    })
+    var newLinks = _.uniqWith(links, _.isEqual);
 
-          _.forEach(value1.entities, function(value2, key2) {
-            var c =0;
-            if(!_.isEmpty(value2)) {
+    const nodes = [];
+    var len = arr.length;
+    _.forEach(docs, function(value2, key2) {
 
-            var data = {
-              id : value2[c].screen_name,
-              //group : count
-            };
-            c++;
-            //console.log(value2);
-            nodes.push(data);
-            }
-          })
-        count++;
-        })
+      if(!_.isEmpty(value2.retweeted_status)) {
+         var data1 = {
+           id : value2.retweeted_status.user.screen_name,
+         }
+         var data2 = {
+           id : value2.user.screen_name,
+         }
+         if(!_.isEmpty(data1)) {
+             nodes.push(data1);
+         }
+         if(!_.isEmpty(data2)) {
+             nodes.push(data2);
+         }
 
+       } else {
+         var data = {
+           id : value2.user.screen_name,
+         }
+         if(!_.isEmpty(data)) {
+             nodes.push(data);
+         }
+         nodes.push(data);
+       }
 
-
-      //console.log(count);
-      return res.send(nodes);
+    })
+      var newNodes = _.uniqBy(nodes, "id");
+      const parent = {
+        "nodes" : newNodes,
+        "links" : newLinks
+      };
+      return res.send(parent);
 
   })
- });
+});
 
- app.get("/getmentionslinks", function (req, res) {
+app.get("/getreplypollution", function (req, res) {
+  var query = db.collection("pollutiondump").find({}, {"user.screen_name": 1, "retweeted_status":1});
+
+ query.toArray(function(err, docs){
+   var arr = [];
+   _.forEach(docs, function(value, key){
+
+       if(!_.isEmpty(value.retweeted_status)) {
+         arr.push(value.retweeted_status.id_str);
+       }
+
+   })
+   _.uniq(arr);
+
+    const links = [];
+   _.forEach(docs, function(value1, key1){
+     if(!_.isEmpty(value1.retweeted_status)) {
+        var data = {
+          source : value1.user.screen_name,
+          target : value1.retweeted_status.user.screen_name,
+        }
+      }
+      if(!_.isEmpty(data)) {
+          links.push(data);
+      }
+  })
+  var newLinks = _.uniqWith(links, _.isEqual);
+
+  const nodes = [];
+  var len = arr.length;
+  _.forEach(docs, function(value2, key2) {
+
+    if(!_.isEmpty(value2.retweeted_status)) {
+       var data1 = {
+         id : value2.retweeted_status.user.screen_name,
+       }
+
+       var data2 = {
+         id : value2.user.screen_name,
+       }
+       if(!_.isEmpty(data1)) {
+           nodes.push(data1);
+       }
+       if(!_.isEmpty(data2)) {
+           nodes.push(data2);
+       }
+     } else {
+       var data = {
+         id : value2.user.screen_name,
+       }
+       if(!_.isEmpty(data)) {
+           nodes.push(data);
+       }
+       nodes.push(data);
+     }
+
+  })
+    var newNodes = _.uniqBy(nodes, "id");
+    const parent = {
+      "nodes" : newNodes,
+      "links" : newLinks
+    };
+    return res.send(parent);
+
+})
+});
+
+ app.get("/getmentionslinksockhi", function (req, res) {
    var query = db.collection("ockhidump").find({}, {"user.screen_name": 1, "entities.user_mentions": 1});
 
    query.toArray(function(err, docs){
@@ -88,7 +187,6 @@ MongoClient.connect('mongodb://ajay:123456@ds135186.mlab.com:35186/tweets', func
     _.forEach(docs, function(value1, key1){
          var data = {
            id : value1.user.screen_name,
-           //group : count
          };
          nodes.push(data);
 
@@ -98,10 +196,8 @@ MongoClient.connect('mongodb://ajay:123456@ds135186.mlab.com:35186/tweets', func
 
            var data = {
              id : value2[c].screen_name,
-             //group : count
            };
            c++;
-           //console.log(value2);
            nodes.push(data);
            }
          })
@@ -117,10 +213,9 @@ MongoClient.connect('mongodb://ajay:123456@ds135186.mlab.com:35186/tweets', func
            var data = {
              source : value1.user.screen_name,
              target : value2[c].screen_name,
-             //value : 1
            };
            c++;
-           //console.log(value2);
+
            links.push(data);
            }
          })
@@ -135,7 +230,77 @@ MongoClient.connect('mongodb://ajay:123456@ds135186.mlab.com:35186/tweets', func
 
 
      console.log(count);
-     return res.send( parent);
+     return res.send( parent );
+
+ })
+ });
+
+ app.get("/getmentionslinkspollution", function (req, res) {
+   var query = db.collection("pollutiondump").find({}, {"user.screen_name": 1, "entities.user_mentions": 1});
+
+   query.toArray(function(err, docs){
+
+     var links = [];
+     var count=1;
+     var nodes = [];
+
+    _.forEach(docs, function(value1, key1){
+         var data = {
+           id : value1.user.screen_name,
+         };
+
+         _.forEach(value1.entities, function(value2, key2) {
+           var c =0;
+           if(!_.isEmpty(value2)) {
+
+           var data = {
+             id : value2[c].screen_name,
+           };
+           c++;
+           nodes.push(data);
+           }
+         })
+       count++;
+       })
+
+
+    _.forEach(docs, function(value1, key1){
+         _.forEach(value1.entities, function(value2, key2) {
+           var c =0;
+           if(!_.isEmpty(value2)) {
+             var datae = {
+               id : value1.user.screen_name,
+             };
+             if(!_.includes(nodes, datae)) {
+               nodes.push(datae);
+             }
+             var dataf = {
+               id : value2[c].screen_name,
+             };
+             if(!_.includes(nodes,dataf)) {
+               nodes.push(dataf);
+             }
+           var data = {
+             source : value1.user.screen_name,
+             target : value2[c].screen_name,
+           };
+           c++;
+           links.push(data);
+           }
+         })
+       count++;
+       })
+       var newNodes = _.uniqBy(nodes, "id");
+       var newLinks = _.uniqBy(links, "id");
+
+       const parent = {
+         "nodes" : newNodes,
+         "links" : newLinks
+       };
+
+
+     console.log(count);
+     return res.send( parent );
 
  })
  });
